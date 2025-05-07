@@ -29,6 +29,7 @@ která zobrazuje pohyb planet v čase a zobrazuje jejich trajektorie.
 -   Vykreslit aktuální polohy těles v čase
 -   Ukládat polohy všech těles v čase pro pozdější vykreslení
     trajektorie
+-   V případě sluneční soustavy načíst obrázky planet a použít je pro grafy a animce 
 -   Pomocí série obrázků vytvořit animaci pohybu planet, která zobrazuje
     trajektorie a polohy planet v čase
 -   Implementovat funkci pro uložení výsledné animace do video souboru
