@@ -144,6 +144,3 @@ dt: float = 3600.0
 Time step
 """
 seconds_in_a_day: float = 3600.0 * 24.0 
-days_in_a_year: float = 365.25
-years_to_simulate: float = 50.0
-simulation_duration: float = seconds_in_a_day * days_in_a_year * years_to_simulate
