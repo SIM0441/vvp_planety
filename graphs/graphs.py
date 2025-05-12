@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
@@ -10,7 +13,7 @@ from matplotlib.artist import Artist
 from typing import List, Dict, Optional
 from physics.physics import Planet
 from collections.abc import Sequence
-import os
+
 
 # Plotting function for the full system
 def plot_full_system(planets: List[Planet], images: Optional[Dict[str, NDArray]], years_to_simulate: float, dt: float) -> None:
