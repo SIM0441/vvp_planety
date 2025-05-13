@@ -14,7 +14,6 @@ from typing import List, Dict, Optional, Union
 from physics.physics import Planet
 from collections.abc import Sequence
 
-
 # Plotting function for the full system
 def plot_full_system(planets: List[Planet], images: Optional[Dict[str, NDArray]], years_to_simulate: float, dt: float) -> None:
     """
