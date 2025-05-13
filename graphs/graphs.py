@@ -10,7 +10,7 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 from physics.physics import Planet
 from collections.abc import Sequence
 
@@ -42,36 +42,36 @@ def plot_full_system(planets: List[Planet], images: Optional[Dict[str, NDArray]]
     ax.tick_params(axis='y', colors='white')
     ax.set_aspect('equal', 'box')
 
-    # Set graph limits
-    all_traj_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in planets])
-    max_abs: float = np.max(np.abs(all_traj_points))
+    all_trajectory_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in planets])
+    max_abs: float = np.max(np.abs(all_trajectory_points))
     buffer: float = max_abs * 0.05
     ax.set_xlim(-max_abs - buffer, max_abs + buffer)
     ax.set_ylim(-max_abs - buffer, max_abs + buffer)
 
-    colors: tuple = plt.get_cmap('tab20').colors
+    colors: tuple[tuple[float, float, float]] = plt.get_cmap('tab20').colors
 
     for i, planet in enumerate(planets):
         trajectory: np.ndarray = np.array(planet.trajectory)
         color: tuple[float, float, float] = colors[i % len(colors)]
-
         ax.plot(trajectory[:, 0], trajectory[:, 1], alpha=1, color=color, linewidth=0.35, label=planet.name)
-        final_pos = planet.position
+        final_position = planet.position
+
         if images and planet.name in images:
-            img: np.ndarray = images[planet.name]
-            ab: AnnotationBbox = AnnotationBbox(OffsetImage(img, zoom=0.006), tuple(final_pos), frameon=False, pad=0)
+            image: np.ndarray = images[planet.name]
+            ab: AnnotationBbox = AnnotationBbox(OffsetImage(image, zoom=0.006), tuple(final_position), frameon=False, pad=0)
             ax.add_artist(ab)
         else:
-            ax.plot(final_pos[0], final_pos[1], 'o', color=color, markersize=4)
+            ax.plot(final_position[0], final_position[1], 'o', color=color, markersize=4)
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, loc='best', facecolor='black', edgecolor='white', labelcolor='white', fontsize=7)
 
-    plt.tight_layout(rect=(0, 0, 0.88, 1))
+    plt.tight_layout(rect=(0, 0, 0.8, 1))
     project_root = os.path.dirname(os.path.abspath(__file__))
     animations_dir = os.path.join(project_root, '..', 'animations_graphs')
     os.makedirs(animations_dir, exist_ok=True)
     fig.savefig(os.path.join(animations_dir, 'full_graph.png'), dpi=500, bbox_inches='tight', facecolor='black')
+
 # Plotting function for the solar system detail
 def plot_detailed_solar_system(planets: List[Planet], images: Optional[Dict[str, NDArray]], years_to_simulate: float, dt: float) -> None:
     """
@@ -84,9 +84,9 @@ def plot_detailed_solar_system(planets: List[Planet], images: Optional[Dict[str,
     Returns:
         None:
     """
-    inner_planet_names: List[str] = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars']
-    inner_planets: List[Planet] = [p for p in planets if p.name in inner_planet_names]
-    
+    if not planets:
+        print("Can't plot a graph, missing planets data.")
+        return None
     fig: Figure
     ax: Axes
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -98,32 +98,33 @@ def plot_detailed_solar_system(planets: List[Planet], images: Optional[Dict[str,
     ax.tick_params(axis='x', colors='white')
     ax.tick_params(axis='y', colors='white')
     ax.set_aspect('equal', 'box')
-    ax.grid(True, linestyle=':', alpha=0.3, color='white')
 
-    all_traj_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in inner_planets])
-    max_abs: float = np.max(np.abs(all_traj_points))
+    inner_planet_names: List[str] = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars']
+    inner_planets: List[Planet] = [p for p in planets if p.name in inner_planet_names]
+    all_trajectory_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in inner_planets])
+    max_abs: float = np.max(np.abs(all_trajectory_points))
     buffer: float = max_abs * 0.05
     ax.set_xlim(-max_abs - buffer, max_abs + buffer)
     ax.set_ylim(-max_abs - buffer, max_abs + buffer)
 
     for i, planet in enumerate(inner_planets):
         trajectory: np.ndarray = np.array(planet.trajectory)
-        final_pos: np.ndarray = planet.position
         ax.plot(trajectory[:, 0], trajectory[:, 1], alpha=0.3, color='white', linewidth=0.25) 
+        final_position: np.ndarray = planet.position
         if images and planet.name in images:
-            img: np.ndarray = images[planet.name]
-            zoom_inset: float = 0.05 if planet.name != 'Sun' else 0.09
-            imagebox: OffsetImage = OffsetImage(img, zoom=zoom_inset)
-            ab: AnnotationBbox = AnnotationBbox(imagebox, tuple(final_pos), frameon=False, pad=0)
+            image: np.ndarray = images[planet.name]
+            image_zoom: float = 0.05 if planet.name != 'Sun' else 0.09
+            imagebox: OffsetImage = OffsetImage(image, zoom=image_zoom)
+            ab: AnnotationBbox = AnnotationBbox(imagebox, tuple(final_position), frameon=False, pad=0)
             ax.add_artist(ab)
         else:
-            ax.plot(final_pos[0], final_pos[1], 'o', color='white', markersize=6)
-
+            ax.plot(final_position[0], final_position[1], 'o', color='white', markersize=6)
     plt.tight_layout()
     project_root = os.path.dirname(os.path.abspath(__file__))
     animations_dir = os.path.join(project_root, '..', 'animations_graphs')
     os.makedirs(animations_dir, exist_ok=True)
     fig.savefig(os.path.join(animations_dir, 'detailed_graph.png'), dpi=500, bbox_inches='tight', facecolor='black')
+
 # Animation function for the full system
 def animate_full_system(planets: List[Planet], images: Optional[Dict[str, NDArray]], years_to_simulate: float, dt: float) -> Optional[animation.FuncAnimation]:
     """
@@ -151,20 +152,20 @@ def animate_full_system(planets: List[Planet], images: Optional[Dict[str, NDArra
     ax.tick_params(axis='y', colors='white')
     ax.set_aspect('equal', 'box')
 
-    all_coords: np.ndarray = np.concatenate([np.array(p.trajectory) for p in planets])
-    max_abs: float = np.max(np.abs(all_coords))
+    all_trajectory_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in planets])
+    max_abs: float = np.max(np.abs(all_trajectory_points))
     buffer: float = max_abs * 0.05
     ax.set_xlim(-max_abs - buffer, max_abs + buffer)
     ax.set_ylim(-max_abs - buffer, max_abs + buffer)
 
-    planet_images: List[AnnotationBbox | Line2D] = []
+    planet_images: List[Union[AnnotationBbox, Line2D]] = []
     trajectories: List[Line2D] = []
     colors: tuple[tuple[float, float, float]] = plt.get_cmap('tab20').colors
     for i, planet in enumerate(planets):
         color: tuple[float, float, float] = colors[i % len(colors)]
         if images and planet.name in images:
-            img: np.ndarray = images[planet.name]
-            imagebox: OffsetImage = OffsetImage(img, zoom=0.006)
+            image: np.ndarray = images[planet.name]
+            imagebox: OffsetImage = OffsetImage(image, zoom=0.006)
             ab: AnnotationBbox = AnnotationBbox(imagebox, (0, 0), frameon=False)
             ax.add_artist(ab)
             planet_images.append(ab)
@@ -179,23 +180,21 @@ def animate_full_system(planets: List[Planet], images: Optional[Dict[str, NDArra
     def update(frame: int) -> Sequence[Artist]:
         for planet, image_artist, line in zip(planets, planet_images, trajectories):
             if frame < len(planet.trajectory):
-                positions: np.ndarray = planet.trajectory[frame]
-
+                position: np.ndarray = planet.trajectory[frame]
                 if isinstance(image_artist, AnnotationBbox):
-                    image_artist.xybox = (float(positions[0]), float(positions[1]))
+                    image_artist.xybox = (float(position[0]), float(position[1]))
                 else:
-                    image_artist.set_data([positions[0]], [positions[1]])
-
+                    image_artist.set_data([position[0]], [position[1]])
                 traj: np.ndarray = np.array(planet.trajectory[:frame+1])
                 line.set_data(traj[:, 0], traj[:, 1])
-
         return planet_images + trajectories
     
-    num_frames: int = max(len(p.trajectory) for p in planets)
-    frame_step = 6
-    frames = range(0, num_frames, frame_step)
-    ani: animation.FuncAnimation = animation.FuncAnimation(fig, update, frames=frames, interval=24, blit=True)
+    number_of_frames: int = max(len(p.trajectory) for p in planets)
+    frame_step = 5
+    frames_for_animation = range(0, number_of_frames, frame_step)
+    ani: animation.FuncAnimation = animation.FuncAnimation(fig, update, frames=frames_for_animation, interval=24, blit=True)
     return ani
+
 # Animation function for the solar system detail
 def animate_detailed_solar_system(planets: List[Planet], images: Optional[Dict[str, NDArray]] | None, years_to_simulate: float, dt: float) -> Optional[animation.FuncAnimation]:
     """
@@ -225,16 +224,17 @@ def animate_detailed_solar_system(planets: List[Planet], images: Optional[Dict[s
 
     inner_planet_names: List[str] = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars']
     inner_planets: List[Planet] = [p for p in planets if p.name in inner_planet_names]
-
-    all_traj_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in inner_planets])
-    max_abs: float = np.max(np.abs(all_traj_points))
+    all_trajectory_points: np.ndarray = np.concatenate([np.array(p.trajectory) for p in inner_planets])
+    max_abs: float = np.max(np.abs(all_trajectory_points))
     buffer: float = max_abs * 0.05
     ax.set_xlim(-max_abs - buffer, max_abs + buffer)
     ax.set_ylim(-max_abs - buffer, max_abs + buffer)
 
-    planet_images: List[AnnotationBbox] = []
+    planet_images: List[Union[AnnotationBbox, Line2D]] = []
     trajectories: List[Line2D] = []
-    for planet in inner_planets:
+    colors: tuple[tuple[float, float, float]] = plt.get_cmap('tab10').colors
+    for i, planet in enumerate(inner_planets):
+        color: tuple[float, float, float] = colors[i % len(colors)]
         if images and planet.name in images:
             img: np.ndarray = images[planet.name]
             zoom_inset: float = 0.05 if planet.name != 'Sun' else 0.09
@@ -242,7 +242,10 @@ def animate_detailed_solar_system(planets: List[Planet], images: Optional[Dict[s
             ab: AnnotationBbox = AnnotationBbox(imagebox, (0, 0), frameon=False, pad=0)
             ax.add_artist(ab)
             planet_images.append(ab)
-
+        else:
+            marker: Line2D
+            marker, = ax.plot(*planet.trajectory[0], marker='o', color=color, markersize=20)
+            planet_images.append(marker)
         line: Line2D
         line, = ax.plot([], [], '-', color='white', alpha=0.3, linewidth=0.25)
         trajectories.append(line)
@@ -250,16 +253,17 @@ def animate_detailed_solar_system(planets: List[Planet], images: Optional[Dict[s
     def update(frame: int) -> Sequence[Artist]:
         for planet, image_artist, line in zip(inner_planets, planet_images, trajectories):
             if frame < len(planet.trajectory):
-                positions: np.ndarray = planet.trajectory[frame]
-                image_artist.xybox = (float(positions[0]), float(positions[1]))
-
+                position: np.ndarray = planet.trajectory[frame]
+                if isinstance(image_artist, AnnotationBbox):
+                    image_artist.xybox = (float(position[0]), float(position[1]))
+                else:
+                    image_artist.set_data([position[0]], [position[1]])
                 traj: np.ndarray = np.array(planet.trajectory[:frame+1])
                 line.set_data(traj[:, 0], traj[:, 1])
-
         return planet_images + trajectories
-
-    num_frames: int = max(len(p.trajectory) for p in planets)
-    frame_step: int = 6
-    frames = range(0, num_frames, frame_step)
-    ani: animation.FuncAnimation = animation.FuncAnimation(fig, update, frames=frames, interval=24, blit=True)
+    
+    number_of_frames: int = max(len(p.trajectory) for p in inner_planets)
+    frame_step: int = 5
+    frames_for_animation = range(0, number_of_frames, frame_step)
+    ani: animation.FuncAnimation = animation.FuncAnimation(fig, update, frames=frames_for_animation, interval=24, blit=True)
     return ani
